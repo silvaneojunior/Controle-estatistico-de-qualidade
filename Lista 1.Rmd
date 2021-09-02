@@ -1,0 +1,292 @@
+---
+title: "Lista 1"
+author: "Silvaneo Viera dos Santos Junior"
+date: ''
+output:
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+```{r setup2, include=FALSE}
+source('helpers/funcoes.R',encoding='UTF-8')
+```
+
+
+
+## Questão 1
+
+```{r}
+data=read.csv('Lista 1/Q1.csv')
+```
+
+### a)
+
+```{r}
+create_sheward_X_barra(data[,-1])
+```
+
+```{r}
+create_sheward_R(data[,-1])
+```
+
+### b)
+
+O número esperado de amotras até um alarme falso (NMAF) é $\frac{1}{\alpha}$, sendo que tomamos $\alpha=0.0027$ no item $a)$, daí, temos que o NMAF é $370.3704$.
+
+### c)
+
+Os novos limites de controle para o valor escolhido de $\alpha$ podem ser verificados no gráfico a seguir.
+
+```{r}
+create_sheward_X_barra(data[,-1],k=qnorm(1-0.0015/2))
+```
+
+```{r}
+create_sheward_R(data[,-1],k=qnorm(1-0.0015/2))
+```
+
+Como pode ser observado, os limites de controle para $\overline{X}$ são $14.60$ e $6.06$, respectivamente, o superior e o inferior, ademias, temos que os limites de controle superior e inferior de $R$ são, respectivamente, $34.04$ e $0.00$.
+
+Por último, como $\alpha=0.0015$, temos que o NMAF é $666.6667$.
+
+### d)
+
+```{r}
+cat('\nItem a)\n')
+p=create_sheward_X_Pd(3,1.3,5)
+cat(paste0('\n','Pb:  ',round(p,2),'\n'))
+cat(paste0(     'NMA: ',round(1/p,2),'\n'))
+
+cat('\nItem b)\n')
+p=create_sheward_X_Pd(qnorm(1-0.0015/2),1.3,5)
+cat(paste0('\n','Pd:  ',round(p,2),'\n'))
+cat(paste0(     'NMA: ',round(1/p,2),'\n'))
+
+```
+
+### e)
+
+```{r}
+create_sheward_S(data[,-1])
+```
+
+```{r}
+create_sheward_S(data[,-1],k=qnorm(1-0.0015/2))
+```
+
+## Questão 2
+
+### a)
+
+```{r}
+data=read.csv('Lista 1/Q2.csv')
+
+n=6
+current_d2=ifelse(n>=15,d2[15],d2[n])
+k=3
+
+X_barra=c()
+
+mu_0=mean(data$X_barra)
+R_barra=mean(data$R)
+sigma_0=R_barra/current_d2
+
+
+LSC=mu_0+k*sigma_0/sqrt(n)
+LM=mu_0
+LIC=mu_0-k*sigma_0/sqrt(n)
+
+plt_x=ggplot()+
+  geom_line(aes(x=c(1:length(data$X_barra)),y=data$X_barra))+
+  geom_point(aes(x=c(1:length(data$X_barra)),y=data$X_barra))+
+  geom_hline(yintercept=LM)+
+  geom_hline(yintercept=LSC,linetype='dashed')+
+  geom_hline(yintercept=LIC,linetype='dashed')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(expression(bar('X')))+
+  theme_bw()
+cat('\nLimites de controle de X_barra: ')
+cat(paste0('\nSuperior: ',LSC,'\n'))
+cat(paste0(  'Média:    ',LM,'\n'))
+cat(paste0(  'Inferior: ',LIC,'\n'))
+
+plt_x
+```
+
+```{r}
+data=read.csv('Lista 1/Q2.csv')
+
+n=6
+current_d2=ifelse(n>=15,d2[15],d2[n])
+current_d3=ifelse(n>=15,d3[15],d3[n])
+
+
+R_barra=mean(data$R)
+sigma_0=R_barra/current_d2
+
+
+LSC=current_d2*sigma_0+k*current_d3*sigma_0
+LM=current_d2*sigma_0
+LIC=max(current_d2*sigma_0-k*current_d3*sigma_0,0)
+
+plt_R=ggplot()+
+  geom_line(aes(x=c(1:length(data$R)),y=data$R))+
+  geom_point(aes(x=c(1:length(data$R)),y=data$R))+
+  geom_hline(yintercept=LM)+
+  geom_hline(yintercept=LSC,linetype='dashed')+
+  geom_hline(yintercept=LIC,linetype='dashed')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous('R')+
+  theme_bw()
+cat('\nLimites de controle de R: ')
+cat(paste0('\nSuperior: ',LSC,'\n'))
+cat(paste0(  'Média:    ',LM,'\n'))
+cat(paste0(  'Inferior: ',LIC,'\n'))
+plt_R
+```
+
+### b)
+
+```{r}
+(pnorm(sqrt(n)*(272.025536292022-268)/sigma_0)-pnorm(-3+sqrt(n)*(247.156281889796-268)/sigma_0))**4
+```
+
+A probabilidade é de $48.44\%$.
+
+### c)
+
+```{r}
+data=read.csv('Lista 1/Q2.csv')
+
+n=12
+current_d2=ifelse(n>=15,d2[15],d2[n])
+k=3
+
+X_barra=c()
+
+mu_0=mean(data$X_barra)
+R_barra=mean(data$R)
+sigma_0=R_barra/current_d2
+
+
+LSC=mu_0+k*sigma_0/sqrt(n)
+LM=mu_0
+LIC=mu_0-k*sigma_0/sqrt(n)
+
+plt_x=ggplot()+
+  geom_line(aes(x=c(1:length(data$X_barra)),y=data$X_barra))+
+  geom_point(aes(x=c(1:length(data$X_barra)),y=data$X_barra))+
+  geom_hline(yintercept=LM)+
+  geom_hline(yintercept=LSC,linetype='dashed')+
+  geom_hline(yintercept=LIC,linetype='dashed')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(expression(bar('X')))+
+  theme_bw()
+cat('\nLimites de controle de X_barra: ')
+cat(paste0('\nSuperior: ',LSC,'\n'))
+cat(paste0(  'Média:    ',LM,'\n'))
+cat(paste0(  'Inferior: ',LIC,'\n'))
+
+plt_x
+```
+
+```{r}
+data=read.csv('Lista 1/Q2.csv')
+
+n=12
+current_d2=ifelse(n>=15,d2[15],d2[n])
+current_d3=ifelse(n>=15,d3[15],d3[n])
+
+
+R_barra=mean(data$R)
+sigma_0=R_barra/current_d2
+
+LSC=current_d2*sigma_0+k*current_d3*sigma_0
+LM=current_d2*sigma_0
+LIC=max(current_d2*sigma_0-k*current_d3*sigma_0,0)
+
+plt_R=ggplot()+
+  geom_line(aes(x=c(1:length(data$R)),y=data$R))+
+  geom_point(aes(x=c(1:length(data$R)),y=data$R))+
+  geom_hline(yintercept=LM)+
+  geom_hline(yintercept=LSC,linetype='dashed')+
+  geom_hline(yintercept=LIC,linetype='dashed')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous('R')+
+  theme_bw()
+cat('\nLimites de controle de R: ')
+cat(paste0('\nSuperior: ',LSC,'\n'))
+cat(paste0(  'Média:    ',LM,'\n'))
+cat(paste0(  'Inferior: ',LIC,'\n'))
+plt_R
+```
+
+### d)
+
+```{r}
+1/(1-pnorm(266.269707577692,268,sigma_0/sqrt(12))-pnorm(252.912110604126,268,sigma_0/sqrt(12)))-0.5
+```
+
+```{r}
+0.5*(1/(1-pnorm(272.025536292022,268,sigma_0/sqrt(6))-pnorm(247.156281889796,268,sigma_0/sqrt(6)))-0.6)
+```
+
+Usando amostras com $n=12$ temos que a probabilidade de que se passem $4$ dias sem que o gráfico sinalize a alteração é de $1.36\%$, em contra-partida, caso sejam tiradas duas amostra de $6$ unidades por dia, a probabilidade de não detecção é $0.05\%$.
+
+## Questão 3
+
+### a)
+
+1.5/c4.
+
+### b)
+
+$$
+\begin{aligned}
+\text{LSM}_{\overline{X}}=&20.0+3\times\frac{1.5}{\sqrt{5}}= 22.01246\\
+\text{LIM}_{\overline{X}}=&20.0-3\times\frac{1.5}{\sqrt{5}}= 17.98754\\
+\text{LSM}_S=&c_4\widehat{\sigma}+3\sqrt{1-c_4^2}\widehat{\sigma}= 1.9338\\
+\text{LIM}_S=&c_4\widehat{\sigma}-3\sqrt{1-c_4^2}\widehat{\sigma}= 0.8862
+\end{aligned}
+$$
+### c)
+
+Em uma única amostragem adicional, a probabilidade é de $49.26\%$.
+
+## Questão 4
+
+```{r}
+
+n=4
+delta=0.75
+lambda=1
+alpha_x=0.002
+alpha_r=0.001
+alpha_s=0.001
+# X_barra
+print(
+  1-pnorm(qnorm(1-alpha_x/2,0,1/sqrt(n)),delta,lambda/sqrt(n))+pnorm(qnorm(alpha_x/2,0,1/sqrt(n)),delta,lambda/sqrt(n))
+)
+
+# R
+# Consultar estes valores na tabela W no classroom e somar
+print(5.75/lambda)
+print(0.3/lambda)
+
+# S^2
+print(
+  1-pchisq(qchisq(1-alpha_s/2,n-1)/(lambda**2),n-1)+pchisq(qchisq(alpha_s/2,n-1)/(lambda**2),n-1)
+)
+```
+
+ # Valores estão errados
+Caso A: $698,749.7$.
+Caso B: $224.6615$.
+Caso C: $3.843599$.
+Caso D: $4.488338$.
+
+## Questão 5

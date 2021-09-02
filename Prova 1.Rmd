@@ -1,0 +1,136 @@
+---
+title: "Prova 1"
+author: "Silvaneo Viera dos Santos Junior"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, include=FALSE}
+library(ggplot2)
+library(reticulate)
+library(latex2exp)
+setwd(rstudioapi::getActiveProject())
+source_python("helpers/python.py")
+
+d2=c(NA,1.128,1.693,2.059,2.326,2.534,2.704,2.847,
+    2.970,3.078,3.173,3.258,3.336,3.407,3.472)
+d3=c(NA,0.853,0.888,0.880,0.864,0.848,0.833,0.820,
+    0.808,0.797,0.787,0.778,0.770,0.763,0.756)
+
+c4=c(NA,0.798,0.886,0.921,0.940,0.952,0.959,0.965,
+    0.969,0.973,0.975,0.978,0.979,0.981,0.982)
+```
+
+## Questão 1
+
+```{r}
+data=read.csv('prova 1/Q1.csv')[,-1]
+n=5
+X_bar=get_mean(data,axis=2)
+R=get_max(data,axis=2)-get_min(data,axis=2)
+sigma_hat=mean(R[1:15])/d2[n]
+
+LSC_X=mean(X_bar[1:15])+3*sigma_hat/sqrt(n)
+LM_X=mean(X_bar[1:15])
+LIC_X=mean(X_bar[1:15])-3*sigma_hat/sqrt(n)
+
+LSC_R=d2[n]*sigma_hat+3*d3[n]*sigma_hat
+LM_R=d2[n]*sigma_hat
+LIC_R=max(0,d2[n]*sigma_hat-3*d3[n]*sigma_hat)
+```
+
+```{r}
+ggplot()+
+  geom_line(aes(x=c(1:25),y=X_bar,linetype='Observações iniciais'))+
+  geom_line(aes(x=c(16:25),y=X_bar[16:25],linetype='Observações de teste'))+
+  geom_point(aes(x=c(1:25),y=X_bar))+
+  geom_hline(yintercept=LM_X)+
+  geom_hline(yintercept=LSC_X,linetype='dashed',color='red')+
+  geom_hline(yintercept=LIC_X,linetype='dashed',color='red')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(expression(bar('X')))+
+  scale_linetype('')+
+  theme_bw()
+```
+
+```{r}
+ggplot()+
+  geom_line(aes(x=c(1:25),y=R,linetype='Observações iniciais'))+
+  geom_line(aes(x=c(16:25),y=R[16:25],linetype='Observações de teste'))+
+  geom_point(aes(x=c(1:25),y=R))+
+  geom_hline(yintercept=LM_R)+
+  geom_hline(yintercept=LSC_R,linetype='dashed',color='red')+
+  geom_hline(yintercept=LIC_R,linetype='dashed',color='red')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(expression('R'))+
+  scale_linetype('')+
+  theme_bw()
+```
+
+## Questão 2
+
+Como visto em aula, os limites de controle para $\overline{X}$ e $S$ podem ser calculados como:
+
+$$
+\begin{aligned}
+LSC_{\overline{X}}&=\widehat{\mu}_0+3\frac{\widehat{\sigma}_0}{\sqrt{n}}\\
+LM_{\overline{X}}&=\widehat{\mu}_0\\
+LSC_{\overline{X}}&=\widehat{\mu}_0-3\frac{\widehat{\sigma}_0}{\sqrt{n}}\\
+\\
+LSC_{S}&=\overline{S}+3\sqrt{1-c_4^2}\frac{\overline{S}}{\sqrt{n}}\\
+LM_{S}&=\overline{S}\\
+LSC_{S}&=\max\left\{0,\overline{S}-3\sqrt{1-c_4^2}\frac{\overline{S}}{\sqrt{n}}\right\}\\
+\end{aligned}
+$$
+
+Sendo:
+
+$$
+\begin{aligned}
+\widehat{\mu}_0&=\frac{1}{n}\sum_{i=1}^n \bar{x}_i=\frac{55.45}{25}=2.218\\
+\bar{S}&=\frac{1}{n}\sum_{i=1}^n S_i=\frac{28.67}{25}=1.1468\\
+\sigma_0&=\frac{\bar{S}}{c_4}=\frac{1.1468}{0.886}=1.294357\\
+\end{aligned}
+$$
+
+Pois, como o tamanho de cada amostra é $3$, pode ser verificado na tabela do slide $14$ que $c_4=0.886$.
+Com isto, podemos obter os seguintes limites de controle:
+
+$$
+\begin{aligned}
+LSC_{\overline{X}}&=2.218+3\frac{1.294357}{\sqrt{3}}=4.459892\\
+LM_{\overline{X}}&=2.218\\
+LSC_{\overline{X}}&=2.218-3\frac{1.294357}{\sqrt{3}}=-0.023892\\
+\\
+LSC_{S}&=1.1468+3\times 0.4636852 \frac{1.1468}{\sqrt{3}}=2.067825\\
+LM_{S}&=1.1468\\
+LSC_{S}&=1.1468-3\times 0.4636852 \frac{1.1468}{\sqrt{3}}=0.2257747\\
+\end{aligned}
+$$
+```{r}
+ggplot()+
+  geom_hline(yintercept=2.218)+
+  geom_hline(yintercept=4.459892,linetype='dashed',color='red')+
+  geom_hline(yintercept=-0.023892,linetype='dashed',color='red')+
+  scale_x_continuous('Tempo',limits=c(1,25))+
+  scale_y_continuous(expression(bar('X')))+
+  scale_linetype('')+
+  labs(title=TeX('Gráfico de controle para \\bar{X}'))+
+  theme_bw()
+```
+
+```{r}
+ggplot()+
+  geom_hline(yintercept=1.1468)+
+  geom_hline(yintercept=2.067825,linetype='dashed',color='red')+
+  geom_hline(yintercept=0.2257747,linetype='dashed',color='red')+
+  scale_x_continuous('Tempo',limits=c(1,25))+
+  scale_y_continuous(expression('S'))+
+  scale_linetype('')+
+  labs(title='Gráfico de controle para S')+
+  theme_bw()
+```

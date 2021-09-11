@@ -1,11 +1,11 @@
 ---
-title: "Prova 1"
+title: "Prova 1 - Controle Estatístico de Qualidade"
 author: "Silvaneo Viera dos Santos Junior"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 ```
 
 
@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2)
 library(reticulate)
 library(latex2exp)
+library(kableExtra)
+library(tidyr)
 setwd(rstudioapi::getActiveProject())
 source_python("helpers/python.py")
 
@@ -26,6 +28,35 @@ c4=c(NA,0.798,0.886,0.921,0.940,0.952,0.959,0.965,
 ```
 
 ## Questão 1
+
+Como visto em aula, podemos calcular o limites de controle para os gráficos de $\overline{X}$ e $R$ com as seguintes fórmulas:
+
+$$
+\begin{aligned}
+LSC_{\overline{X}}&=\widehat{\mu}_0+3\frac{\widehat{\sigma}_0}{\sqrt{n}}\\
+LM_{\overline{X}}&=\widehat{\mu}_0\\
+LSC_{\overline{X}}&=\widehat{\mu}_0-3\frac{\widehat{\sigma}_0}{\sqrt{n}}\\
+\\
+LSC_{R}&=(d_2+3d_3)\widehat{\sigma}_0\\
+LM_{R}&=d_2\widehat{\sigma}_0\\
+LSC_{R}&=\max\{0,(d_2-3d_3)\widehat{\sigma}_0\}\\
+\end{aligned}
+$$
+
+Com $d_2=2.326$, $d_3=0.864$ (pois $n=5$) e $\widehat{\sigma}_0=\frac{\overline{R}}{d_2}=2.751505$.
+Fazendo uso do $R$, podemos obter os seguintes valores para os limites:
+
+$$
+\begin{aligned}
+LSC_{\overline{X}}&=3.651531\\
+LM_{\overline{X}}&=-0.04\\
+LSC_{\overline{X}}&=-3.731531\\
+\\
+LSC_{R}&=13.5319\\
+LM_{R}&=6.4\\
+LSC_{R}&=0\\
+\end{aligned}
+$$
 
 ```{r}
 data=read.csv('prova 1/Q1.csv')[,-1]
@@ -54,7 +85,8 @@ ggplot()+
   scale_x_continuous('Tempo')+
   scale_y_continuous(expression(bar('X')))+
   scale_linetype('')+
-  theme_bw()
+  labs(title=TeX('Gráfico de controle de $\\bar{X}$'))+
+  theme_bw()+ theme(legend.position="bottom")
 ```
 
 ```{r}
@@ -68,8 +100,13 @@ ggplot()+
   scale_x_continuous('Tempo')+
   scale_y_continuous(expression('R'))+
   scale_linetype('')+
-  theme_bw()
+  labs(title='Gráfico de controle de R')+
+  theme_bw()+ theme(legend.position="bottom")
 ```
+
+Nos gráficos acima, os pontos cuja linha está tracejada são associados as observações iniciais usadas para calcular os limites de controle e não devem ser levados em considração na verificação do controle do processo (incluí eles no gráfico apenas por completude). 
+
+Observando os dados das amostras coletadas para teste (os pontos com linha sólida), temos que a variabilidade do processo parece estar em controle (não há pontos fora dos limites de controle), contudo a média do processo possui $5$ observações acima do limite estipulado, desta forma, o processo parece ter a média fora de controle, de modo que é necessário investigar se houve causas especiais que afetaram os dados coletados e se há melhorias ou correções a serem feitas no proceso de produção, sendo que, após a conclussão das investigações e modificações necessárias, novas amostras devem ser coletadas a fim de verificar se o processo está em controle.
 
 ## Questão 2
 
@@ -134,3 +171,475 @@ ggplot()+
   labs(title='Gráfico de controle para S')+
   theme_bw()
 ```
+
+## Questão 3
+
+```{r eval=FALSE, include=FALSE}
+ope_1=read.csv('Prova 1/Q3_1.csv',header=FALSE)
+ope_2=read.csv('Prova 1/Q3_2.csv',header=FALSE)
+
+R1=get_max(ope_1,axis=2)-get_min(ope_1,axis=2)
+R2=get_max(ope_2,axis=2)-get_min(ope_2,axis=2)
+```
+
+
+Podemos estimar o desvio padrão da repetitividade como:
+
+$$
+\widehat{\sigma}_{repe}=\frac{\overline{\overline{R}}}{d_2}
+$$
+
+Sendo que $d_2=1.693$ (pois foram feitas $3$ medições de cada peça) e:
+
+$$
+\overline{\overline{R}}=\frac{1}{2}\sum_{i=1}^{2}\overline{R}_i=\frac{1.7+2.3}{2}=2
+$$
+
+Daí, temos que:
+
+$$
+\widehat{\sigma}_{repe}=\frac{\overline{\overline{R}}}{d_2}=\frac{2}{1.693}=1.181335
+$$
+
+Podemos estimar $\sigma_{repro}$ como:
+
+$$
+\widehat{\sigma}_{repro}=\sqrt{\left(\frac{R_{\overline{\overline{x}}}}{d_2}\right)^2-\frac{\widehat{\sigma}^2_{repe}}{30}}=\sqrt{\left(\frac{0.1666667}{1.128}\right)^2-0.04651841}=\sqrt{0.02183127-0.04651841}=\sqrt{-0.02468714}
+$$
+
+
+Lembrando que o $d_2$ na conta acima usa como quantidade de referência o número de operadores ($2$), portanto é diferente do $d_2$ usado anteriormente.
+
+Claramente, não podemos calcular a variância da reprodutividade, pois $\frac{\widehat{\sigma}^2_{repe}}{30}>\left(\frac{R_{\overline{\overline{x}}}}{d_2}\right)^2$.
+
+A variabilidade total do processo pode ser calculada como:
+
+$$
+\widehat{\sigma}_{Total}=\sqrt{\frac{\sum^{o}_{i=1}\sum_{j=1}^{n}\sum_{k=1}^{r}(X_{ijk}-\overline{\overline{\overline{X}}})^2}{onr-1}}=2.794068
+$$
+
+Observe que:
+
+$$
+\widehat{\sigma}^2_{med}=\widehat{\sigma}^2_{repe}+\widehat{\sigma}^2_{repro}
+$$
+
+Daí, como não podemos calcular $\widehat{\sigma}_{repro}$, não poderiamos calcular $\widehat{\sigma}^2_{med}$, contudo, para que a questão não fique incompleta, podemos usar que:
+
+$$
+\widehat{\sigma}^2_{med}=\widehat{\sigma}^2_{repe}+\widehat{\sigma}^2_{repro}=\widehat{\sigma}^2_{repe}+\left(\frac{R_{\overline{\overline{x}}}}{d_2}\right)^2-\frac{\widehat{\sigma}^2_{repe}}{30}=\frac{29}{30}\widehat{\sigma}^2_{repe}+\left(\frac{R_{\overline{\overline{x}}}}{d_2}\right)^2=1.370865
+$$
+
+Temos então que:
+
+$$
+\widehat{\sigma}_{med}=1.170839
+$$
+Vale enfatizar que este resultado é absurdo, pois temos que $\sigma_{med}=1.170839<1.181335=\sigma_{repe}$
+
+A partir dos valores obtidos, podemos calcular o índice $R\&R$:
+
+$$
+R\&R=6\widehat{\sigma}_{med}=7.025034
+$$
+Com isto, podemos avaliar o sistema de medição usando a porcentagem de Repetitividade e Reprodutibilidade dada por:
+
+$$
+\%R\&R=\frac{R\&R}{6\widehat{\sigma}_{Total}}100=41.90446
+$$
+
+Por fim, com base no valor acima, podemos concluir que o sistema de medição é inadequado e precisa de melhorias, pois está acima do valor de $30%$.
+
+## Questão 4
+
+### a)
+
+```{r}
+data=read.csv('Prova 1/Q4.csv')
+```
+
+Como visto em aula, os limites de controle para os gráficos de observações individuais e amplitude móvel são:
+
+$$
+\begin{aligned}
+LSC_X&=\overline{X}+3\frac{\overline{MR}}{d_2}\\
+LM_X&=\overline{X}\\
+LIC_X&=\overline{X}-3\frac{\overline{MR}}{d_2}\\
+\\
+LSC_{MR}&=(d_2+3d_3)\frac{\overline{MR}}{d_2}\\
+LM_{MR}&=\overline{MR}\\
+LIC_{MR}&=\max\left\{0,(d_2-3d_3)\frac{\overline{MR}}{d_2}\right\}\\
+\end{aligned}
+$$
+
+Onde:
+
+$$
+\begin{aligned}
+\overline{MR}&=\frac{\sum_{i=2}^mMR_i}{m-1}\\
+MR_i&=\max\{x_i,x_{i-1}\}-\min\{x_i,x_{i-1}\}
+\end{aligned}
+$$
+```{r}
+X_bar=data$X
+MR=get_max(cbind(data[2:30,],data[1:29,]),axis=2)-get_min(cbind(data[2:30,],data[1:29,]),axis=2)
+sigma_hat=mean(MR)/d2[2]
+
+LSC_X=mean(data$X)+3*sigma_hat
+LM_X=mean(data$X)
+LIC_X=mean(data$X)-3*sigma_hat
+
+LSC_MR=(d2[2]+3*d3[2])*sigma_hat
+LM_MR=mean(MR)
+LIC_MR=max(0,(d2[2]-3*d3[2])*sigma_hat)
+```
+
+```{r}
+ggplot()+
+  geom_line(aes(x=c(1:30),y=X_bar))+
+  geom_point(aes(x=c(1:30),y=X_bar))+
+  geom_hline(yintercept=LM_X)+
+  geom_hline(yintercept=LSC_X,color='red',linetype='dashed')+
+  geom_hline(yintercept=LIC_X,color='red',linetype='dashed')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(expression(bar('X')))+
+  labs(title=TeX('Gráfico de controle de $\\bar{X}$'))+
+  scale_linetype('')+
+  theme_bw()
+```
+
+```{r}
+ggplot()+
+  geom_line(aes(x=c(2:30),y=MR))+
+  geom_point(aes(x=c(2:30),y=MR))+
+  geom_hline(yintercept=LM_MR)+
+  geom_hline(yintercept=LSC_MR,color='red',linetype='dashed')+
+  geom_hline(yintercept=LIC_MR,color='red',linetype='dashed')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(expression('MR'))+
+  labs(title=TeX('Gráfico de controle de $MR$'))+
+  scale_linetype('')+
+  theme_bw()
+```
+
+### b)
+
+Para o algoritmo CUSUM, usaremos a seguinte tabela:
+
+```{r}
+cusum=cbind(data$X,data$X-mean(data$X))
+S=c()
+for(i in c(1:30)){
+  S=c(S,sum(cusum[1:i,2]))
+}
+cusum=as.data.frame(cbind(c(1:30),round(cusum,2),round(S,2)))
+
+kable(cusum,format="latex", align = "c", booktabs=T,escape=F,col.names=c('Obs.','$X_i$','$X_i-\\overline{X}$','$S_i$')) %>%
+  kable_styling(position = "center") %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+```{r}
+ggplot()+
+  geom_line(aes(x=c(1:30),y=S))+
+  geom_point(aes(x=c(1:30),y=S))+
+  geom_hline(yintercept =5*sigma_hat,linetype='dashed',color='red')+
+  geom_hline(yintercept=-5*sigma_hat,linetype='dashed',color='red')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(TeX('$S_i$'))+
+  labs(title=TeX('Gráfico de $S_i$'))+
+  scale_linetype('')+
+  theme_bw()
+```
+
+Definimos:
+
+$$
+\begin{aligned}
+S_i^+=\max\{0,X_i-(\mu_0+D)+S_{i-1}^+\}\\
+S_i^-=\max\{0,(\mu_0-D)-X_i+S_{i-1}^-\}
+\end{aligned}
+$$
+
+Com $D=d\widehat{\sigma}_0=0.5\widehat{\sigma}_0=1.912753$ e $S_0^+=S_0^-=0$.
+A partir dos valores calculados, podemos obter a seguinte tabela:
+
+```{r}
+S_p=c(0)
+S_n=c(0)
+N_p=c(0)
+N_n=c(0)
+for(i in c(1:30)){
+  S_p=c(S_p,max(0,data$X[i]-(mean(data$X)+1.912753)+S_p[i]))
+  S_n=c(S_n,max(0,(mean(data$X)-1.912753)-data$X[i]+S_n[i]))
+  N_p=c(N_p,ifelse(S_p[i+1]>0,N_p[i]+1,0))
+  N_n=c(N_n,ifelse(S_n[i+1]>0,N_n[i]+1,0))
+}
+S_p=S_p[-1]
+S_n=S_n[-1]
+N_p=N_p[-1]
+N_n=N_n[-1]
+
+cusum=as.data.frame(cbind(c(1:30),data$X,S_p,N_p,S_n,N_n))
+
+kable(cusum,format="latex", align = "c", booktabs=T,escape=F,col.names=c('Obs.','$X_i$','$S_i^+$','$N^+$','$S_i^-$','$N^-$')) %>%
+  kable_styling(position = "center") %>%
+  kable_styling(latex_options = "HOLD_position")
+```
+
+```{r}
+ggplot()+
+  geom_line(aes(x=c(1:30),y=S_p,color='S^+'))+
+  geom_point(aes(x=c(1:30),y=S_p,color='S^+',shape='S^+'))+
+  geom_line(aes(x=c(1:30),y=-S_n,color='S^-'))+
+  geom_point(aes(x=c(1:30),y=-S_n,color='S^-',shape='S^-'))+
+  geom_hline(yintercept =5*sigma_hat,linetype='dashed',color='red')+
+  geom_hline(yintercept=-5*sigma_hat,linetype='dashed',color='red')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(TeX('$S_i$'))+
+  scale_color_manual('',labels=TeX,values=c('blue','black'))+
+  scale_shape('',guide='none')+
+  scale_linetype('')+
+  
+  theme_bw()
+```
+
+Com base no algoritmo CUSUM, o processo não parece estar em controle, pois a última observação saí dos limites de controle estabelecidos. Uma vez que foi detectado que o processo está fora de controle, podemos utilizar $N^+_{30}$ (pois $S_{30}^+>5\sigma_0$) para verificar em qual amostra o processo saiu de controle, de fato, $N^+_{30}=2$, logo o processo saiu de controle na amostra de índice $N-N^+_{30}=28$.
+
+### c)
+
+Vamos definir:
+
+$$
+Y_i=\lambda X_i+(1-\lambda)Y_{i-1}
+$$
+Com $Y_0=\widehat{\mu}_0=4.645667$. Ademais, temos os seguinte limites de controle:
+
+$$
+\begin{aligned}
+LSC_{Y_i}&=\widehat{\mu}_0+3\widehat{\sigma}_0\sqrt{\left(\frac{\lambda}{2-\lambda}\right)[1-(1-\lambda)^{2i}]}\\
+LM_{Y_i}&=\widehat{\mu}_0\\
+LIC_{Y_i}&=\widehat{\mu}_0-3\widehat{\sigma}_0\sqrt{\left(\frac{\lambda}{2-\lambda}\right)[1-(1-\lambda)^{2i}]}\\
+\end{aligned}
+$$
+
+Lembremos que $\widehat{\mu}_0=4.645667$ e $\widehat{\sigma}_0=3.825507$, assim para $\lambda=0.2$ e $\lambda=0.4$:
+
+```{r}
+lambda1=0.2
+Y1=c(mean(data$X))
+for(i in c(1:30)){
+  Y1=c(Y1,lambda1*data$X[i]+(1-lambda1)*Y1[i])
+}
+Y1=Y1[-1]
+
+LSC1=mean(data$X)+sigma_hat*sqrt((lambda1/(2-lambda1))*(1-(1-lambda1)^(2*c(1:30))))
+LIC1=mean(data$X)-sigma_hat*sqrt((lambda1/(2-lambda1))*(1-(1-lambda1)^(2*c(1:30))))
+
+lambda2=0.4
+Y2=c(mean(data$X))
+for(i in c(1:30)){
+  Y2=c(Y2,lambda2*data$X[i]+(1-lambda2)*Y2[i])
+}
+Y2=Y2[-1]
+
+LSC2=mean(data$X)+sigma_hat*sqrt((lambda2/(2-lambda2))*(1-(1-lambda2)^(2*c(1:30))))
+LIC2=mean(data$X)-sigma_hat*sqrt((lambda2/(2-lambda2))*(1-(1-lambda2)^(2*c(1:30))))
+
+label1='$\\lambda==0.2$'
+label2='$\\lambda==0.4$'
+
+ggplot()+
+  geom_line(aes(x=c(1:30),y=Y1,color=label1))+
+  geom_point(aes(x=c(1:30),y=Y1,color=label1))+
+  geom_line(aes(x=c(1:30),y=Y2,color=label2))+
+  geom_point(aes(x=c(1:30),y=Y2,color=label2))+
+  geom_line(aes(x=1:30,y=LSC1,color=label1),linetype='dashed',alpha=0.5)+
+  geom_line(aes(x=1:30,y=LIC1,color=label1),linetype='dashed',alpha=0.5)+
+  geom_line(aes(x=1:30,y=LSC2,color=label2),linetype='dashed',alpha=0.5)+
+  geom_line(aes(x=1:30,y=LIC2,color=label2),linetype='dashed',alpha=0.5)+
+  geom_line(aes(x=1:30,y=mean(data$X),),linetype='dashed',alpha=0.5,color='black')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(TeX('$Y_i$'))+
+  scale_linetype('')+
+  scale_color_manual('',labels=TeX,values=c('red','blue'))+
+  labs(title=TeX('Gráfico de Controle de EWMA'))+
+  theme_bw()
+```
+
+Podemos observar que os gráficos acima dão um resultado razoavelmente parecido, porém destacam-se as seguintes diferenças:
+
+- Os limites de controle são mais estreitos para $\lambda=0.2$;
+- A série $Y_i$ é mais estável para $\lambda=0.2$;
+- Apesar de $11$ pontos estarem fora dos intervalos em ambas as séries, os pontos que estão fora diferem de uma série para outra;
+- As amostras de índice $13$ e $16$ estão fora dos limites de controle para $\lambda=0.2$, mas não quando $\lambda=0.4$;
+- As amostras de índice $17$ e $20$ estão fora dos limites de controle para $\lambda=0.4$, mas não quando $\lambda=0.2$.
+
+Vale ressaltar que a conclussão da análise do gráfico é a mesma, seja com $\lambda=0.2$ ou com $\lambda=0.4$, o processo está fora de controle, sendo necessário uma investigação sobre possíveis efeitos especiais que tenham intervido com a retirada das amostras e a verificação da adequação do sistema de produção.
+
+## Questão 5
+
+### a)
+
+A partir destas especificações, temos que a probabilidade de alarme falso para o gráfico de $\overline{X}$ é:
+
+$$
+\alpha_{\overline{X}}=\mathbb{P}\left(\overline{X} < \mu-2.7\frac{\sigma_0}{\sqrt{5}} \text{ ou } \overline{X}>\mu+2.7\frac{\sigma_0}{\sqrt{5}}\right)=
+1-\mathbb{P}\left(-2.7\le\frac{\overline{X}-\mu}{\sigma_0/\sqrt{5}}\le2.7\right)
+$$
+
+Com auxílio do $R$, podemos calcular facilmente esta probabilidade, pois $\frac{\overline{X}-\mu}{\sigma_0/\sqrt{5}}$ tem distribuição Normal Padrão, daí, obtendo que:
+
+$$
+\mathbb{P}\left(-2.7\le\frac{\overline{X}-\mu}{\sigma_0/\sqrt{5}}\le2.7\right)=0.9930661
+$$
+
+Com isto:
+
+$$
+\alpha_{\overline{X}}=\mathbb{P}\left(\overline{X} < \mu-2.7\frac{\sigma_0}{\sqrt{5}} \text{ ou } \overline{X}>\mu+2.7\frac{\sigma_0}{\sqrt{5}}\right)=0.0069339
+$$
+
+Ou seja, a probabilidade de alarme falso para o gráfico de $\overline{X}$ é $0.69339\%$.
+
+Calculemos agora a probabilidade de alarme falso para o gráfico de $R$. De forma análoga ao caso de $\overline{X}$, temos que a probabilidade de alarme falso é:
+
+$$
+\alpha_{R}=\mathbb{P}\left(R < \max\{0,d_2-2.7d_3\} \text{ ou } R>d_2+2.7d_3\right)=
+1-\mathbb{P}\left(\max\{0,d_2-2.7d_3\}\le R \le d_2+2.7d_3\right)
+$$
+
+Para $n=5$, temos que $d_2=2.326$ e $d_3=0.864$, logo a probabilidade de alarme falso $\alpha_{\overline{R}}$ pode ser escrita como:
+
+$$
+\alpha_{R}=1-\mathbb{P}\left(R \le 4.6588\right)
+$$
+
+Pois $d_2-2.7d_3=-0.0068<0$ e $\mathbb{P}\left(R < 0\right)=0$.
+Com uso da tabela de amplitude relativa $W$, podemos verificar que:
+
+$$
+\alpha_{R}=1-\mathbb{P}\left(R \le 4.6588\right)=1-0.9911=0.0089
+$$
+
+O enunciado pede a frequência esperada de alarmes falsos para o uso conjunto dos gráficos, para isto, devemos calcular a probabilidade de alarme falso em pelo menos um dos gráficos:
+
+$$
+\alpha_{R+\overline{X}}=1-(1-\alpha_R)(1-\alpha_{\overline{X}})=0.0157722
+$$
+
+Vale que o valor esperado para o tempo de espera até um alarme falso é $\frac{1}{\alpha_{R+\overline{X}}}=63.4027$
+
+### b)
+
+Vimos em aula que a probabilidade de alarme dado um deslocamento $\delta$ da média e um deslocamento $\lambda$ do desvio-padrão pode ser calculada como:
+
+$$
+\begin{aligned}
+Pd_{\overline{X}}=&\mathbb{P}\left(\left.\overline{X} < \mu_0-2.7\frac{\sigma_0}{\sqrt{5}} \text{ ou } \overline{X}>\mu_0 +2.7\frac{\sigma_0}{\sqrt{5}}\right \vert\mu=\mu_0+\delta\sigma_0 \text{ e } \sigma=\lambda \sigma_0\right)\\
+=&1-\mathbb{P}\left(\left.\mu_0-2.7\frac{\sigma_0}{\sqrt{5}}\le\overline{X}\le\mu_0 +2.7\frac{\sigma_0}{\sqrt{5}}\right \vert\mu=\mu_0+\delta\sigma_0 \text{ e } \sigma=\lambda \sigma_0\right)\\
+=&1-\mathbb{P}\left(\left. \frac{-\delta\sigma_0-2.7\frac{\sigma_0}{\sqrt{5}}}{\lambda\sigma_0/\sqrt{5}}\le \frac{\overline{X}-\mu_0-\delta \sigma_0}{\lambda\sigma_0/\sqrt{5}} \le\frac{-\delta\sigma_0+2.7\frac{\sigma_0}{\sqrt{5}}}{\lambda\sigma_0/\sqrt{5}}\right \vert\mu=\mu_0+\delta\sigma_0 \text{ e } \sigma=\lambda \sigma_0\right)\\
+=&1-\mathbb{P}\left(\left. \frac{-\sqrt{5}\delta-2.7}{\lambda}\le \frac{\overline{X}-\mu_0-\delta \sigma_0}{\lambda\sigma_0/\sqrt{5}} \le\frac{-\sqrt{5}\delta+2.7}{\lambda}\right \vert\mu=\mu_0+\delta\sigma_0 \text{ e } \sigma=\lambda \sigma_0\right)\\
+=&1-\mathbb{P}\left(\left. -3.290712\le \frac{\overline{X}-\mu_0-\delta \sigma_0}{\lambda\sigma_0/\sqrt{5}} \le 0.309288\right \vert\mu=\mu_0+\delta\sigma_0 \text{ e } \sigma=\lambda \sigma_0\right)\\
+\end{aligned}
+$$
+
+Temos que, se $\mu=\mu_0+\delta\sigma_0$ e $\sigma=\lambda\sigma_0$, então $\frac{\overline{X}-\mu_0-\delta \sigma_0}{\lambda\sigma_0/\sqrt{5}}$ tem distribuição Normal Padrão, daí:
+
+$$
+\mathbb{P}\left(\left. -3.290712\le \frac{\overline{X}-\mu_0-\delta \sigma_0}{\lambda\sigma_0/\sqrt{5}} \le 0.309288\right \vert\mu=\mu_0+\delta\sigma_0 \text{ e } \sigma=\lambda \sigma_0\right)=0.6209491
+$$
+
+Assim:
+
+$$
+\begin{aligned}
+Pd_{\overline{X}}&=1-\mathbb{P}\left(\left. -3.290712\le \frac{\overline{X}-\mu_0-\delta \sigma_0}{\lambda\sigma_0/\sqrt{5}} \le 0.309288\right \vert\mu=\mu_0+\delta\sigma_0 \text{ e } \sigma=\lambda \sigma_0\right)\\
+&=0.3790509
+\end{aligned}
+$$
+Calculemos agora $Pd_{R}$. Como visto em aula:
+
+$$
+Pd_{R}=\mathbb{P}\left(W>\frac{4.6588}{1.5}\right)=1-\mathbb{P}\left(W\le3.105867\right)
+$$
+
+Usando a tabela de amplitude relativa, podemos observar que $Pd_{R}=1-0.8174=0.1826$.
+Com os valores acima, podemos obter a probabilidade de detecção com o uso conjunto dos gráficos:
+
+$$
+Pd_{R+\overline{X}}=1-(1-Pd_{R})(1-Pd_{\overline{X}})=0.4924362
+$$
+
+Com isto, podemos concluir que o valor do $NMA$ é:
+
+$$
+NMA=\frac{1}{Pd_{R+\overline{X}}}=\frac{1}{0.4924362}=2.03072
+$$
+
+## Questão 6
+
+### a)
+
+Com auxílio da função $acf$ do $R$, podemos obter o seguinte gráfico para a autocorrelação amostral:
+
+```{r}
+data=read.csv('Prova 1/Q6.csv')
+acf(data)
+```
+
+Podemos usar os valores do gráfico para estimar o tempo necessário para que a autocorrelação se dissipe, para isto, basta identificar o $lag$ tal que a autocorrelação para aquele $lag$ seja menor do que $\frac{2}{\sqrt{N}}=0.2309401$. Temos que a autocorrelação para o $lag$ $3$ é $0.220536013<0.2309401=\frac{2}{\sqrt{N}}$, como as medições são feitas de $2$ em $2$ horas, temos que o tempo até que a autocorrelação se dissipe é $3 \times 2$ horas $=6$ horas.
+
+
+### b)
+
+Para o gráfico de observações individuais e médias móveis, iremos calcular os limites de controle tomando $w=3$, pois a autocorrelação se discipa a partir deste valor. Os limites de controle podem ser obtidos da seguinte forma:
+
+$$
+\begin{aligned}
+LSC_{X_i}&=
+\begin{cases}
+\frac{1}{i}\sum_{j=0}^{i-1}X_{i-j}+3\frac{\widehat{\sigma}_0}{i} \quad \text{ se }1\le i<w\\
+\frac{1}{3}\sum_{j=0}^{2}X_{i-j}+3\frac{\widehat{\sigma}_0}{3} \quad \text{ se }i\ge w\\
+\end{cases}\\
+LM_X&=\begin{cases}
+\frac{1}{i}\sum_{j=0}^{i-1}X_{i-j} \quad \text{ se }1\le i<w\\
+\frac{1}{3}\sum_{j=0}^{2}X_{i-j} \quad \text{ se }i\ge w\\
+\end{cases}\\
+LIC_X&=\begin{cases}
+\frac{1}{i}\sum_{j=0}^{i-1}X_{i-j}-3\frac{\widehat{\sigma}_0}{i} \quad \text{ se }1\le i<w\\
+\frac{1}{3}\sum_{j=0}^{2}X_{i-j}-3\frac{\widehat{\sigma}_0}{3} \quad \text{ se }i\ge w\\
+\end{cases}
+\end{aligned}
+$$
+
+Lembrando que $\widehat{\sigma}=\frac{1}{d_2}$,$\overline{MR}=\frac{1}{m}\sum_{i=1}^{m}MR_i$, com $MR_i=\max\{X_i,X_{i-1}\}-\min\{X_i,X_{i-1}\}$.
+
+```{r}
+w=3
+X_bar=c()
+for(i in c(1:75)){
+  X_bar=c(X_bar,mean(data$X[max(i-w,1):i]))
+}
+MR=get_max(cbind(data[2:75,],data[1:74,]),axis=2)-get_min(cbind(data[2:75,],data[1:74,]),axis=2)
+sigma_hat=mean(MR)/d2[2]
+
+LSC_X=mean(data$X)+3*sigma_hat/sqrt(get_min(cbind(c(1:75),w),axis=2))
+LM_X=mean(data$X)
+LIC_X=mean(data$X)-3*sigma_hat/sqrt(get_min(cbind(c(1:75),w),axis=2))
+```
+
+```{r}
+ggplot()+
+  geom_line(aes(x=c(1:75),y=X_bar))+
+  geom_point(aes(x=c(1:75),y=X_bar))+
+  geom_hline(yintercept=LM_X)+
+  geom_line(aes(x=c(1:75),y=LSC_X),linetype='dashed',color='red')+
+  geom_line(aes(x=c(1:75),y=LIC_X),linetype='dashed',color='red')+
+  scale_x_continuous('Tempo')+
+  scale_y_continuous(expression('MA'))+
+  scale_linetype('')+
+  theme_bw()
+```
+
+O gráfico acima indica que o processo está fora de controle, pois possui diversos pontos fora dos limites de controle.
